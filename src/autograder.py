@@ -56,16 +56,6 @@ locals()['autograder']["{function}_{counter}"] = ({function}({test}) == {tests[1
         
 
 if __name__ == "__main__":
-    # myAuto = Autograder('https://s.matc.io/hw3.py')
-    # myAuto.checkImports(['math'])
-    # myAuto = Autograder('https://s.matc.io/index.htm')
-
-
-    # Maybe fix.
-
-    # myAuto = Autograder('https://s.matc.io/sample.py')
-    # print(ast.dump(myAuto.parsed))
-
     testCases = json.load(open('testCases.json', 'r'))
     testCases["decodeList"]
 
