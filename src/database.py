@@ -22,15 +22,16 @@ class db(object):
             `questions` TEXT NOT NULL,
             `flags` TEXT NOT NULL
         )''')
-        self.cur.execute('''CREATE TABLE IF NOT EXISTS users (
-            key TEXT NOT NULL UNIQUE,
-            role TEXT DEFAULT 'user'
+        self.cur.execute('''CREATE TABLE IF NOT EXISTS `users` (
+            `key` TEXT NOT NULL UNIQUE,
+            `role` TEXT DEFAULT 'user'
         )''')
-        self.cur.execute('''CREATE TABLE IF NOT EXISTS questions (
-            key TEXT NOT NULL UNIQUE,
-            function TEXT NOT NULL,
-            points INT NOT NULL,
-            criteria TEXT NOT NULL
+        self.cur.execute('''CREATE TABLE IF NOT EXISTS `questions` (
+            `key` TEXT NOT NULL UNIQUE,
+            `function` TEXT NOT NULL,
+            `points` INT NOT NULL,
+            `criteria` TEXT NOT NULL,
+            `flags` TEXT NOT NULL
         )''') #should default to {}
 
     def create(self, table, **kwargs):
@@ -54,7 +55,7 @@ class db(object):
 
     def getAssignment(self, name):
         rows = self.cur.execute(f'SELECT * FROM `assignments` WHERE `name` = "{name}"')
-        return rows.fetchall()
+        return rows.fetchone()
 
     # Commits the changes.
     def saveChanges(self):

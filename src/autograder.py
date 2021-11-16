@@ -1,26 +1,31 @@
 import mimetypes
-import urllib.request
+import aiohttp
 import json
 import ast
 
 from . import exceptions
+# import exceptions
 
 # TODO: Deal with global flags.
 # TODO: Deal with user-defined flags.
 
 class Autograder(object):
     def __init__(self, url):
-        # Check if file mim is text/application
-        if mimetypes.guess_type(url)[0] != 'text/x-python':
-            raise exceptions.invalidPython('Invalid file type passed.')
         self.url = url
+
+    async def run(self):
+        # Check if file mim is text/application
+        if mimetypes.guess_type(self.url)[0] != 'text/x-python':
+            raise exceptions.invalidPython('Invalid file type passed.')
+        # self.url = url
         # Check if file contains proper Python
-        with urllib.request.urlopen(self.url) as file:
-            self.file = file.read().decode('utf-8')
-            try:
-                self.parsed = ast.parse(self.file)
-            except SyntaxError:
-                raise exceptions.invalidPython('Invalid python file passed.')
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.url) as response:
+                self.file = await response.text()
+                try:
+                    self.parsed = ast.parse(self.file)
+                except SyntaxError:
+                    raise exceptions.invalidPython('Invalid python file passed.')
         # Run some default checks.
         self.defaultChecks()
 
@@ -60,5 +65,5 @@ if __name__ == "__main__":
     testCases["decodeList"]
 
     myAuto = Autograder('https://s.matc.io/hw3.py')
-    myAuto.attachTestCases(testCases)
-    print(myAuto.file)
+    # myAuto.run()
+    # myAuto.attachTestCases(testCases)
