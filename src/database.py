@@ -27,9 +27,9 @@ class db(object):
             `role` TEXT DEFAULT 'user'
         )''')
         self.cur.execute('''CREATE TABLE IF NOT EXISTS `questions` (
-            `key` TEXT NOT NULL UNIQUE,
-            `function` TEXT NOT NULL,
+            `function` TEXT NOT NULL UNIQUE,
             `points` INT NOT NULL,
+            `type` TEXT NOT NULL,
             `criteria` TEXT NOT NULL,
             `flags` TEXT NOT NULL
         )''') #should default to {}
@@ -42,20 +42,31 @@ class db(object):
             values += '?, '
         columns = columns[:-2]
         values = values[:-2]
-        self.cur.execute(f'''INSERT INTO {table} ({columns}) VALUES ({values})''', tuple(kwargs.values()))
+        self.cur.execute(f'''INSERT INTO `{table}` ({columns}) VALUES ({values})''', tuple(kwargs.values()))
         self.saveChanges()
         return
+
 
     def update(self, reference, new):
         pass
 
-    def getAssignments(self, table):
-        rows = self.cur.execute(f'''SELECT * FROM {table}''')
+    def getAssignments(self):
+        rows = self.cur.execute(f'''SELECT * FROM assignments''')
         return rows.fetchall()
 
     def getAssignment(self, name):
-        rows = self.cur.execute(f'SELECT * FROM `assignments` WHERE `name` = "{name}"')
+        rows = self.cur.execute(f'SELECT * FROM `assignments` WHERE `name` = ?', (name,))
+        print(rows.fetchall())
         return rows.fetchone()
+    
+    def deleteAssignment(self, name):
+        x = self.cur.execute(f'DELETE FROM `assignments` WHERE name = ?', (name,))
+
+        if x.rowcount() == 0:
+            raise Exception('No such assignment exists')
+        else:
+            self.saveChanges()
+            return True
 
     # Commits the changes.
     def saveChanges(self):
@@ -64,6 +75,6 @@ class db(object):
     
 if __name__ == "__main__":
     myDb = db()
-    # myDb.create('assignments',  name='hello1', questions='{1, 2, 3}', flags='{}')
-    # print(myDb.getAssignments('assignments'))
-    print(myDb.getAssignment('hello1'))
+    myDb.create('assignments',  name='hello', questions='{1, 2, 3}', flags='{}')
+    print(myDb.getAssignments())
+    # print(myDb.getAssignment('hello1'))
