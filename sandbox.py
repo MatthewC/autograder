@@ -6,7 +6,6 @@ from src import autograder
 
 def evalCode(file):
     x = copy.copy(globals())
-    raise AssertionError
     x['__name__'] = 'sandbox'
     # Stores the result of each test case.
     x['autograder'] = {}

@@ -56,17 +56,20 @@ class db(object):
 
     def getAssignment(self, name):
         rows = self.cur.execute(f'SELECT * FROM `assignments` WHERE `name` = ?', (name,))
-        print(rows.fetchall())
         return rows.fetchone()
     
     def deleteAssignment(self, name):
         x = self.cur.execute(f'DELETE FROM `assignments` WHERE name = ?', (name,))
 
-        if x.rowcount() == 0:
+        if x.rowcount == 0:
             raise Exception('No such assignment exists')
         else:
             self.saveChanges()
             return True
+
+    def getTests(self, function):
+        rows = self.cur.execute('SELECT * FROM `questions` WHERE function = ?', (function,))
+        return rows.fetchone()
 
     # Commits the changes.
     def saveChanges(self):
