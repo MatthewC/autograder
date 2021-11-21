@@ -1,9 +1,7 @@
 import mimetypes
 import aiohttp
-import json
 import ast
 import asyncio
-import re
 
 if __name__ == '__main__':
     import exceptions
