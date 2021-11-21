@@ -1,3 +1,4 @@
+from re import X
 from discord import flags
 import src
 import json
@@ -117,7 +118,7 @@ async def submit(cmd: commands.context, submissionName):
             try:
                 submission = src.Autograder(submissionURL, assignment['flags'])
                 await submission.fetch()
-                # print(submission.file)
+
                 functions = json.loads(assignment['questions'])
                 await cmd.send(None, embed=discord.Embed(title='File submitted.', description=f'Assignment: {submissionName}'))
                 sandbox = src.Sandbox()
@@ -129,6 +130,12 @@ async def submit(cmd: commands.context, submissionName):
                     if function not in submission.functionNames:
                         await announceTest.edit(content=f'Testing {function}: **not found, skipped**')
                         await cmd.send(f'''```{function} results:\n   Function not defined. Skipped\n    Points: 0```''')
+                        continue
+
+                    flagsMet = submission.checkFlags(function, test['flags'])
+                    if not flagsMet[0]:
+                        await announceTest.edit(content=f'Testing {function}: **Skipped**')
+                        await cmd.send('Following flags were not met:', ', '.join(flagsMet[1:]))
                         continue
 
                     test = data.getTests(function)

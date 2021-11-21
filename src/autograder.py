@@ -12,19 +12,36 @@ else:
 # TODO: Deal with user-defined flags.
 
 class visitNode(ast.NodeVisitor):
-    def __init__(self, code):
+    def __init__(self):
         self.nodesCalled = []
+        self.foundFor = False
+        self.foundWhile = False
+        self.foundTry = False
+        self.foundSlice = False
         pass
 
     def visit_Call(self, node: ast.Call):
         self.nodesCalled.append(node)
         # return super().visit_Call(node)
 
+    def visit_For(self, node: ast.For):
+        self.foundFor = True
+    
+    def visit_While(self, node: ast.While):
+        self.foundWhile = True
+
+    def visit_Try(self, node: ast.Try):
+        self.foundTry = True
+
+    def visit_Subscript(self, node: ast.Subscript):
+        if isinstance(node.slice, ast.Slice):
+            self.foundSlice = True
+
 class Autograder(object):
     def __init__(self, url: str, flags: list):
         self.url = url
         self.globalFlags = flags
-        self.functions = []
+        self.functionCode = {}
         self.functionNames = []
 
     # Deal's with fetching and running basic tests on the python file.
@@ -49,14 +66,15 @@ class Autograder(object):
     def functionDefinitions(self):
         for statement in self.parsed.body:
             if isinstance(statement, ast.FunctionDef):
-                self.functions.append(statement)
+                self.functionCode[statement.name] = statement
                 self.functionNames.append(statement.name)
 
     def getFunctionCalls(self, function):
-        for func in self.functions:
-            if func.name == function:
-                a = visitNode('')
-                a.visit(func)
+        for func in self.functionCode:
+            funcStatement = self.functionCode[func]
+            if funcStatement.name == function:
+                a = visitNode()
+                a.visit(funcStatement)
                 return a.nodesCalled
     
     def getSelfFunctionCalls(self, function):
@@ -87,6 +105,20 @@ class Autograder(object):
                         raise exceptions.illegalImport(f'Import of module {importt.name} not allowed.')
             break
 
+    def checkFlags(self, function, flags):
+        metFlags = [True]
+        if 'recursive' in flags and not self.detectRecursion(function):
+            metFlags.append('recursive')
+            metFlags[0] = False
+        if 'noLoops' in flags and not self.detectLoops(function):
+            metFlags.append('noLoops')
+            metFlags[0] = False
+        if 'tryExcept' in flags and not self.detectTryExcept(function):
+            metFlags.append('tryExcept')
+            metFlags[0] = False
+        if 'stringIndexing' in flags and not self.detect(function):
+            pass
+
     def detectRecursion(self, function, running=[]):
         funcs = self.getSelfFunctionCalls(function)
 
@@ -106,6 +138,69 @@ class Autograder(object):
                 return True
         else:
             return False
+
+
+    def detectLoops(self, function, seenFuncs=set()):
+        # Checks if while/for loops are used witin main function.
+        mainFunc = visitNode()
+        mainFunc.visit(self.functionCode[function])
+        
+        if function in seenFuncs:
+            return mainFunc.foundWhile or mainFunc.foundFor
+        seenFuncs.add(function)
+
+        if mainFunc.foundWhile or mainFunc.foundFor:
+            return True
+        else:
+            # Checks if any helper function use while/for loops.
+            funcs = self.getSelfFunctionCalls(function)
+            for func in funcs:
+                a = visitNode()
+                a.visit(self.functionCode[func.func.id])
+                if a.foundWhile or a.foundFor:
+                    return True
+                else:
+                    # Only recurse if current function is calling other helper functions.
+                    if self.getSelfFunctionCalls(func.func.id) != []:
+                        return self.detectLoops(func.func.id, seenFuncs)
+            return False
+
+    def detectTryExcept(self, function, seenFuncs=set()):
+        # Checks if main function has try/except
+        mainFunc = visitNode()
+        mainFunc.visit(self.functionCode[function])
+        # If it uses try/except, we are done.
+        if mainFunc.foundTry: return True
+
+        # Otherwise, loop through all the helper functions.
+        if function in seenFuncs:
+            return mainFunc.foundTry
+        seenFuncs.add(function)
+
+        funcs = self.getFunctionCalls(function)
+        for func in funcs:
+            a = visitNode()
+            a.visit(self.functionCode[func.func.id])
+            if a.foundTry: return True
+            if self.getFunctionCalls(func.func.id) != []: return self.detectTryExcept(function, seenFuncs)
+        return False
+
+    def detectSlice(self, function, seenFuncs=set()):
+        mainFunc = visitNode()
+        mainFunc.visit(self.functionCode[function])
+        if mainFunc.foundSlice: return True
+
+        if function in seenFuncs:
+            return mainFunc.foundSlice
+        seenFuncs.add(function)
+
+        funcs = self.getFunctionCalls(function)
+        for func in funcs:
+            a = visitNode()
+            a.visit(self.functionCode[func.func.id])
+            if a.foundSlice: return True
+            if self.getFunctionCalls(func.func.id) != []: return self.detectSlice(function, seenFuncs)
+        return False
 
     ## TEST CASE FUNCTIONS ##
 
@@ -176,7 +271,11 @@ async def main():
     # print(myAuto.functionNames)
     # x = myAuto.getFunctionCalls('capitalizeWords')
     # x = myAuto.detectRecursion('capitalizeWords')
-    x = myAuto.detectRecursion('fF')
+    # x = myAuto.detectRecursion('fF')
+    # x = myAuto.detectLoops('withBoth')
+    # x = myAuto.detectTryExcept('divideByZero')
+    x = myAuto.detectSlice('stringSlice')
+    # print(ast.dump(myAuto.parsed))
     # print(myA)
     print(x)
 
@@ -190,4 +289,3 @@ if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
-
