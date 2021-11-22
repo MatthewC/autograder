@@ -1,8 +1,7 @@
-from re import X
-from discord import flags
 import src
 import json
 import discord
+import aiohttp
 from discord.ext import commands
 # async def assignment(cmd: commands.context, *, args: commands.clean_content):
 
@@ -70,6 +69,9 @@ async def question(cmd: commands.context, function_name: str, points: int, test_
     """
     Creates a new question, requires the function name, the test cases (in JSON format), and flags.
     Sample usage: !create question recursiveUpper 10 "{'hello':'HELLO'}" "return" "noLoops, recursive"
+
+    recursive: Function must be recursive
+    recursion: Function cannot use recursion
     """
     # Flags -> OOP, Destructive/Non-Destructive, Recursive, NoLoops..
     await cmd.trigger_typing()
@@ -99,6 +101,32 @@ async def assignment(cmd: commands.context, assignment_name: str):
         print(err)
         await sendEmbed(cmd, 'Error', f'No such assignment ({assignment_name}) was found.')
 
+# Deal with importing questions
+@client.command()
+async def upload(cmd: commands.context):
+    if cmd.message.attachments == []:
+        await sendEmbed(cmd, 'Error', 'No file supplied.')
+    else:
+        importURL = cmd.message.attachments[0].url
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(importURL) as response:
+                file = await response.text()
+                try:
+                    importFile = json.loads(file)
+                except SyntaxError:
+                    await sendEmbed(cmd, 'Error', 'Invalid JSON file passed.')
+        data = src.db()
+
+        for func in importFile:
+            flag = str(importFile[func].pop('FLAGS'))
+            point = importFile[func].pop('POINTS')
+            fType = importFile[func].pop('TYPE')
+            testCases = json.dumps(importFile[func])
+            print('a', testCases)
+            print(f'function={func}, flags={flag}, points={point}, type={fType}, criteria={testCases}')
+            data.create('questions', function=func, flags=flag, points=point, type=fType, criteria=testCases)
+
 # Deal with submissions
 
 @client.command()
@@ -127,36 +155,44 @@ async def submit(cmd: commands.context, submissionName):
                 for function in functions:
                     announceTest = await cmd.send(f'Testing {function}...')
 
-                    if function not in submission.functionNames:
+                    test = data.getTests(function)
+                    print(test['type'])
+                    if function not in submission.functionNames and test['type'] != 'oop':
                         await announceTest.edit(content=f'Testing {function}: **not found, skipped**')
-                        await cmd.send(f'''```{function} results:\n   Function not defined. Skipped\n    Points: 0```''')
+                        await cmd.send(f'''```{function} results:\n    Function not defined. Skipped\n    Points: 0```''')
                         continue
 
                     flagsMet = submission.checkFlags(function, test['flags'])
-                    if not flagsMet[0]:
-                        await announceTest.edit(content=f'Testing {function}: **Skipped**')
-                        await cmd.send('Following flags were not met:', ', '.join(flagsMet[1:]))
+
+                    if flagsMet[0] == None:
+                        await announceTest.edit(content=f'Testing {function}: **Skipped** - Function not recursive.')
+                        continue
+                    elif not flagsMet[0]:
+                        failedFlags = ', '.join(flagsMet[1:])
+                        await announceTest.edit(content=f'Testing {function}: **Skipped** - Use of {failedFlags} not allowed.')
                         continue
 
-                    test = data.getTests(function)
                     testCases = json.loads(test['criteria'])
                     fileToRun = submission.injectTestCase(testCases, function, test['type'])
                     results = sandbox.run(fileToRun)
                     counter = 0
                     
                     retString = f'```{function} results:'
+                    shouldPass = False
                     passed = 0
                     for result in results[function]:
                         print(result)
                         counter += 1
-                        if result[1]:
+                        if result[1] == True:
                             retString += f'\n    Test #{counter}: Passed'
                             passed += 1
                         elif result[1] == None:
-                            retString += f'\n    Test #{counter}: Failed\n        Expected: {result[2]}\n        Received: {result[3]}'
+                            await announceTest.edit(content=f'Testing {function}: **Skipped** - Function must be {test["type"]}.')
+                            shouldPass = True
+                            break
                         else:
                             retString += f'\n    Test #{counter}: Failed\n        Expected: {result[2]}\n        Received: {result[3]}'
-
+                    if shouldPass: continue
                     await announceTest.edit(content=f'Testing {function}: **Finished**')
 
                     score = round(passed/counter * test["points"])

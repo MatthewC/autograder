@@ -1,0 +1,20 @@
+{
+  "mustUseRecursionF": {
+    "FLAGS": ["recursive"],
+    "POINTS": 15,
+    "TYPE": "return",
+    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
+  },
+  "cantUseRecursionF": {
+    "FLAGS": ["recursion"],
+    "POINTS": 15,
+    "TYPE": "return",
+    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
+  },
+  "tomatoOOP": {
+    "FLAGS": [],
+    "POINTS": 15,
+    "TYPE": "oop",
+    "basicChecks": "assert(str(Polynomial([1,2,3])) == \"Polynomial(coeffs=[1, 2, 3])\")\np1 = Polynomial([2, -3, 5])  # 2x**2 -3x + 5\nassert(p1.degree() == 2)"
+  }
+}

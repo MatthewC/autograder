@@ -1,3 +1,7 @@
+class invalidJSON(Exception):
+    """ Exception raised for invalid JSON files."""
+    pass
+
 class invalidPython(Exception):
     """ Exception raised for illegal python files. """
     pass
