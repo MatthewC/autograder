@@ -17,3 +17,11 @@
 `!submit <assignment name>`
 
 **There is a demo already loaded in (using the tests/sample.py file) which can be uploaded and submitted as 'homework3':** `!submit homework3`
+
+## TODO:
+
+- [ ] Add propper comments
+- [ ] Fix minor bugs with OOP code (works, but errors can sometimes not be reported)
+- [ ] Add competitions
+- [ ] Keep track of submissions per user
+- [ ] Allow users to view their previous submissions/results
