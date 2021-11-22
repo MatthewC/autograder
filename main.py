@@ -117,15 +117,19 @@ async def upload(cmd: commands.context):
                 except SyntaxError:
                     await sendEmbed(cmd, 'Error', 'Invalid JSON file passed.')
         data = src.db()
-
-        for func in importFile:
-            flag = str(importFile[func].pop('FLAGS'))
-            point = importFile[func].pop('POINTS')
-            fType = importFile[func].pop('TYPE')
-            testCases = json.dumps(importFile[func])
-            print('a', testCases)
-            print(f'function={func}, flags={flag}, points={point}, type={fType}, criteria={testCases}')
-            data.create('questions', function=func, flags=flag, points=point, type=fType, criteria=testCases)
+        try: 
+            for func in importFile:
+                flag = str(importFile[func].pop('FLAGS'))
+                point = importFile[func].pop('POINTS')
+                fType = importFile[func].pop('TYPE')
+                testCases = json.dumps(importFile[func])
+                print('a', testCases)
+                data.create('questions', function=func, flags=flag, points=point, type=fType, criteria=testCases)
+                await cmd.send(f'`{func}` succesfully imported.')
+        except json.decoder.JSONDecodeError:
+            await sendEmbed(cmd, 'JSON Error', 'There was an issue reading your JSON file.')
+        except Exception as err:
+            await sendEmbed(cmd, str(type(err)), f'{err}')
 
 # Deal with submissions
 

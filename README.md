@@ -6,7 +6,7 @@
 
 `!create assignment <assignment name> <questions>`
 
-Example: `!create assignment homework3 "decodeList,capitalizeWords,printUpper,nonExist,destructive,nDestructive,destructive2,nDestructive2,cantUseRecursionF,mustUseRecursionF"`
+**Example**: `!create assignment homework3 "decodeList,capitalizeWords,printUpper,nonExist,destructive,nDestructive,destructive2,nDestructive2,cantUseRecursionF,mustUseRecursionF"`
 
 ### To upload a set of questions (see tests/questions.json):
 
