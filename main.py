@@ -118,7 +118,7 @@ async def create(cmd: commands.context):
 # Sample usage: !create assignment homework1 "recursiveUpper, recursiveOddNumbersOnly" "noLoops, recursive"
 @create.command()
 @commands.check(is_admin)
-async def assignment(cmd: commands.context, assignment_name: str, questions: flagParser='', flags: flagParser='', deadline=''):
+async def assignment(cmd: commands.context, assignment_name: str, questions: flagParser='', deadline: str = '', flags: flagParser=''):
     """
     Create a new assignment; requires an assignment name. Flags and questions can be ommited.
     Sample usage: !create assignment homework1 "recursiveUpper, recursiveOddNumbersOnly" "noLoops, recursive"
@@ -206,7 +206,7 @@ async def upload(cmd: commands.context):
                 point = importFile[func].pop('POINTS')
                 fType = importFile[func].pop('TYPE')
                 testCases = json.dumps(importFile[func])
-                print('a', testCases)
+
                 data.create('questions', function=func, flags=flag, points=point, type=fType, criteria=testCases)
                 await cmd.send(f'`{func}` succesfully imported.')
         except json.decoder.JSONDecodeError:
@@ -226,7 +226,7 @@ async def submit(cmd: commands.context, submissionName):
         # Check if submission name provided is valid.
         data = src.db()
         assignment = data.getAssignment(submissionName)
-        print(submissionName)
+       
         if assignment == None:
             await sendEmbed(cmd, 'Error', 'Submission name not found.')
         else:
@@ -280,7 +280,7 @@ async def submit(cmd: commands.context, submissionName):
                     if results[function] == None: return await announceTest.edit(content=f'Testing {function}: **Skipped** - TIMEOUT.')
 
                     for result in results[function]:
-                        print(result)
+
                         counter += 1
                         if result[1] == True:
                             retString += f'\n    Test #{counter}: Passed'
@@ -333,7 +333,7 @@ async def submit(cmd: commands.context, submissionName):
 async def stats(cmd: commands.context, userID = None):
     if not await is_admin(cmd): (userID, username) = (cmd.message.author.id, cmd.message.author.name)
     else: (userID, username) = (userID, cmd.message.author.name)
-    print(overDeadline('26/11/21 18:00'))
+
     data = src.db()
 
     tableStr = '```ASSIGNMENT@@@@KEPT SCORE             TIME\n'
