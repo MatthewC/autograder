@@ -2,6 +2,7 @@
 main.py
 
 This is the main file which handles most of the autograder-discord interface.
+Documentation used: https://discordpy.readthedocs.io/en/stable/
 """
 
 
@@ -96,7 +97,7 @@ async def is_admin(cmd: commands.context):
     else:
         return False
     
-# Returns True or False depending 
+# Returns True or False depending on the date and deadline.
 def overDeadline(date):
     deadlineDate = time.strptime(date, '%d/%m/%y %H:%M')
     deadlineTime = time.mktime(deadlineDate)
@@ -126,6 +127,7 @@ async def assignment(cmd: commands.context, assignment_name: str, questions: fla
     await cmd.trigger_typing()
     data = src.db()
     try:
+        # Checks if lists are valid
         json.loads(f'[{questions}]')
         json.loads(f'[{flags}]')
 
@@ -156,7 +158,7 @@ async def question(cmd: commands.context, function_name: str, points: int, test_
         # Test if proper json was passed for test_cases and flags
         if isinstance(json.loads(test_cases), int):
             raise json.decoder.JSONDecodeError('Expecting valid JSON', '', 0)
-        #TODO: Check if proper flags are being passed.
+            
         json.loads(f'[{flags}]')
         
         data.create('questions', function=function_name, points=points, type=type, criteria=test_cases, flags=f'[{flags}]')

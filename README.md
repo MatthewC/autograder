@@ -24,7 +24,7 @@
 
 `!delete <question/assignment> <name>`
 
-### To upload a set of questions (see tests/questions.json):
+### To upload a set of questions (see tests/questions.json as a guideline):
 
 `!upload`
 
@@ -71,6 +71,22 @@
 `!competition leaderboard <name>`
 
 **There is a demo already loaded in (using the tests/sample.py file) which can be uploaded and submitted as 'homework1':** `!submit homework1`
+
+## QUESTION TYPES
+
+- return
+- print
+- destructive
+- nonDestructive
+- oop
+
+## QUESTION FLAGS
+
+- stringIndexing
+- recursion (_function can't use recursion_)
+- recursive (_funciton has to be recursive_)
+- tryExcept
+- noLoops
 
 ## TODO:
 

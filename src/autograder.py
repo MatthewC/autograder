@@ -6,7 +6,6 @@ The main autograder file.
 
 import mimetypes
 import aiohttp
-import time
 import ast
 import os
 
@@ -14,9 +13,6 @@ import os
 # run the autograder by itself.
 import asyncio
 from . import exceptions
-
-# TODO: Deal with global flags.
-# TODO: Deal with user-defined flags.
 
 class visitNode(ast.NodeVisitor):
     def __init__(self, classNames=''):
@@ -71,6 +67,7 @@ class Autograder(object):
 
     # Deal's with fetching and running basic tests on the python file.
     # Not in __init__ due to needing async capabilities.
+    # Referenced from: https://docs.aiohttp.org/en/stable/
     async def fetch(self, checkM=True):
         # Check if file mime is text/application
         if checkM and mimetypes.guess_type(self.url)[0] != 'text/x-python':
@@ -114,7 +111,6 @@ class Autograder(object):
 
     # Default checks.
     def defaultChecks(self):
-        allowedStatements = ['math']
         for statement in self.parsed.body:
             # Checks if any __x__ functions are being called.
             if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call) and isinstance(statement.value.func, ast.FunctionDef): 
@@ -122,6 +118,7 @@ class Autograder(object):
                 if funcCall[:2] == '__' and funcCall[-2:] == '__':
                     raise exceptions.illegalImport(f'Use of {funcCall} not allowed.')
 
+    # Checks what the python file imports.
     def checkImports(self, illegalImports: list):
         for statement in self.parsed.body:
             if isinstance(statement, ast.Import):
@@ -130,6 +127,7 @@ class Autograder(object):
                         raise exceptions.illegalImport(f'Import of module {importt.name} not allowed.')
             break
 
+    # Deals with running the appropriate function based on it's type
     def checkFlags(self, function, flags):
         metFlags = [True]
 
@@ -223,6 +221,7 @@ class Autograder(object):
             if self.getFunctionCalls(func.func.id) != []: return self.detectTryExcept(function, seenFuncs)
         return False
 
+    # This function deals with detecting string slicing.
     def detectSlice(self, function, seenFuncs=set()):
         mainFunc = visitNode()
         mainFunc.visit(self.functionCode[function])
@@ -381,28 +380,11 @@ except Exception as err:
         return file
 
 async def main():
-    # myAuto = Autograder('https://s.matc.io/recursive.py', [])
-    myAuto = Autograder('https://www.dropbox.com/s/2kzrmed3bkceptt/sample.py?dl=1', [])
-    # myAuto = Autograder('https://s.matc.io/hw6.py', [])
+    myAuto = Autograder('https://s.matc.io/recursive.py', [])
     await myAuto.fetch(False)
-    # print(myAuto.functionNames)
-    # x = myAuto.getFunctionCalls('capitalizeWords')
-    # x = myAuto.detectRecursion('capitalizeWords')
     x = myAuto.detectRecursion('mustUseRecursionF')
-    # x = myAuto.detectLoops('withBoth')
-    # x = myAuto.detectTryExcept('divideByZero')
-    # x = myAuto.detectSlice('stringSlice')
-    # print(ast.dump(myAuto.parsed))
-    # print(myA)
     print(x)
 
 if __name__ == "__main__":
-    # testCases = json.load(open('testCases.json', 'r').close())
-    # testCases["decodeList"]
-
-    # myAuto = Autograder('https://s.matc.io/hw3.py')
-    # myAuto.run()
-    # myAuto.attachTestCases(testCases)
-
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
