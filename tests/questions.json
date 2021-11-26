@@ -1,19 +1,79 @@
 {
-  "mustUseRecursionF": {
-    "FLAGS": ["recursive"],
-    "POINTS": 15,
-    "TYPE": "return",
-    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
-  },
-  "cantUseRecursionF": {
-    "FLAGS": ["recursion"],
-    "POINTS": 15,
-    "TYPE": "return",
-    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
-  },
-  "tomatoOOP": {
+  "decodeList": {
     "FLAGS": [],
-    "POINTS": 15,
+    "POINTS": 10,
+    "TYPE": "return",
+    "11378921378912101234512345": [789, -789, 1234512345],
+    "21378911378922101234512345": [-789, 789, -1234512345],
+    "21378911378922101234512346": [-789, 789, -1234512345],
+    "21378911378922101234512346, True": [123, 123, 123]
+  },
+  "capitalizeWords": {
+    "FLAGS": ["recursive"],
+    "POINTS": 10,
+    "TYPE": "return",
+    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
+  },
+  "printUpper": {
+    "FLAGS": [],
+    "POINTS": 10,
+    "TYPE": "print",
+    "'hello'": "'HELLO'",
+    "'Goodbye!'": "'GOODBYE!'"
+  },
+  "cantUseLoops": {
+    "FLAGS": ["noLoops"],
+    "POINTS": 10,
+    "TYPE": "return",
+    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
+  },
+  "usesRecursionWhenTheyCant": {
+    "FLAGS": ["recursion"],
+    "POINTS": 10,
+    "TYPE": "return",
+    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
+  },
+  "isNotRecursive": {
+    "FLAGS": ["recursive"],
+    "POINTS": 10,
+    "TYPE": "return",
+    "['foo', 'bar', 'world', 'hello']": "['FOO', 'BAR', 'WORLD', 'HELLO']"
+  },
+  "destructiveFunction": {
+    "FLAGS": [],
+    "POINTS": 10,
+    "TYPE": "destructive",
+    "[1,2,3,4], -1": "[2,3,4,1]",
+    "[4,1,2,3], 2": "[2,3,4,1]",
+    "[2,3,4,1], 7": "[3,4,1,2]"
+  },
+  "destructiveFunctionFails": {
+    "FLAGS": [],
+    "POINTS": 10,
+    "TYPE": "destructive",
+    "[1,2,3,4], -1": "[2,3,4,1]",
+    "[4,1,2,3], 2": "[2,3,4,1]",
+    "[2,3,4,1], 7": "[3,4,1,2]"
+  },
+  "nonDestructiveFunction": {
+    "FLAGS": [],
+    "POINTS": 10,
+    "TYPE": "nonDestructive",
+    "[1,2,3,4], -1": "[2,3,4,1]",
+    "[1,2,3,4], 0": "[1,2,3,4]",
+    "[1,2,3,4], 1": "[4,1,2,3]"
+  },
+  "nonDestructiveFunctionFails": {
+    "FLAGS": [],
+    "POINTS": 10,
+    "TYPE": "nonDestructive",
+    "[1,2,3,4], -1": "[2,3,4,1]",
+    "[1,2,3,4], 0": "[1,2,3,4]",
+    "[1,2,3,4], 1": "[4,1,2,3]"
+  },
+  "oopTest": {
+    "FLAGS": [],
+    "POINTS": 10,
     "TYPE": "oop",
     "basicChecks": "assert(str(Polynomial([1,2,3])) == \"Polynomial(coeffs=[1, 2, 3])\")\np1 = Polynomial([2, -3, 5])  # 2x**2 -3x + 5\nassert(p1.degree() == 2)"
   }

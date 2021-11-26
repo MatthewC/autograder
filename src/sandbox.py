@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import multiprocessing.queues as mpq
 import copy
 import json
 import asyncio
@@ -20,20 +21,26 @@ class Sandbox(object):
         q = mp.Queue()
         p = mp.Process(target=self.runTest, args=(q, file))
         p.start()
-        x = q.get()
-        p.join()
-        return x
+        try:
+            x = q.get(timeout=30)
+            p.join()
+            if not isinstance(x, Exception):
+                return x
+        except mpq.Empty:
+            p.terminate()
+            print('oh')
 
 
 async def main():
     from autograder import Autograder as ag
 
-    testCases = json.load(open('testCases.json', 'r'))
+    # testCases = json.load(open('testCases.json', 'r'))
     # Load file
     myAuto = ag('https://s.matc.io/hw3.py', [])
+    # myAuto = ag('https://s.matc.io/timeoutTest.py', [])
     await myAuto.fetch()
-    sand = Sandbox('12')
-    print(sand.run())
+    sand = Sandbox()
+    print(sand.run(myAuto.file))
     # workers = []
     # for test in testCases:
     #     file = myAuto.attachTestCases(testCases[test], test)

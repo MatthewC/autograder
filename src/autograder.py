@@ -1,15 +1,19 @@
+"""
+autograder.py
+
+The main autograder file.
+"""
+
 import mimetypes
 import aiohttp
+import time
 import ast
+import os
 
 # This module is just used for testing, if you want to 
-# run the autograder byitself
+# run the autograder by itself.
 import asyncio
-
-if __name__ == '__main__':
-    import exceptions
-else:
-    from . import exceptions
+from . import exceptions
 
 # TODO: Deal with global flags.
 # TODO: Deal with user-defined flags.
@@ -43,7 +47,7 @@ class visitNode(ast.NodeVisitor):
             self.foundSlice = True
 
     def visit_Assign(self, node: ast.Assign):
-        if isinstance(node.value, ast.Call) and node.value.func.name in self.classNames:
+        if isinstance(node.value, ast.Call) and not isinstance(node.value.func, ast.Attribute) and node.value.func.name in self.classNames:
             self.foundOOP = True
 
 class Autograder(object):
@@ -52,6 +56,18 @@ class Autograder(object):
         self.globalFlags = flags
         self.functionCode = {}
         self.functionNames = []
+
+    def saveFile(self, id, assignment, receipt):
+        if not os.path.exists('./submissions'):
+            os.mkdir('./submissions')
+            
+        if not os.path.exists(f'./submissions/{id}'):
+            os.mkdir(f'./submissions/{id}')
+
+        with open(f'./submissions/{id}/{assignment}_{receipt}.py', 'w') as f:
+            f.write(self.file)
+            f.close()
+        
 
     # Deal's with fetching and running basic tests on the python file.
     # Not in __init__ due to needing async capabilities.
@@ -101,7 +117,7 @@ class Autograder(object):
         allowedStatements = ['math']
         for statement in self.parsed.body:
             # Checks if any __x__ functions are being called.
-            if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call): 
+            if isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call) and isinstance(statement.value.func, ast.FunctionDef): 
                 funcCall = statement.value.func.id
                 if funcCall[:2] == '__' and funcCall[-2:] == '__':
                     raise exceptions.illegalImport(f'Use of {funcCall} not allowed.')
@@ -143,7 +159,6 @@ class Autograder(object):
         if running == None:
             running = []
         funcs = self.getSelfFunctionCalls(function)
-        print(funcs)
 
         if len(running) > 10:
             lastThree = running[-3:]
@@ -263,31 +278,36 @@ class Autograder(object):
 
     def attachReturnTestCases(self, tests, function):
         file = self.file
-        print(tests)
+        
+        file += '\nimport time\nstart = time.time()\n'
         for test in tests:
-            #{function}({json.dumps(str(test))})
             file += f'''
 if locals()['autograder'].get('{function}', None) == None:
     locals()['autograder']['{function}'] = []
+    locals()['autograder']['{function}_time'] = 0
 try:
     locals()['autograder']['{function}'].append( (None, {function}({test}) == {tests[test]}, {tests[test]}, {function}({test})) )
 except Exception as err:
     locals()['autograder']['{function}'].append( (None, False, {tests[test]}, type(err).__name__ + ': ' + str(err)) )
             '''
+        file += f'\nend = time.time()\nlocals()[\'autograder\'][\'{function}_time\'] = end-start'
         return file
 
 #https://www.kite.com/python/answers/how-to-redirect-print-output-to-a-variable-in-python
     def attachPrintTestCases(self, tests, function):
-        overwritePrint = '''import io
+        overwritePrint = '''\nimport time
+import io
 import sys
 newOutput = io.StringIO()
 sys.stdout = newOutput
 '''
         file = overwritePrint + self.file
+        file += '\nstart = time.time()\n'
         for test in tests:
             file += f'''
 if locals()['autograder'].get('{function}', None) == None:
     locals()['autograder']['{function}'] = []
+    locals()['autograder']['{function}_time'] = 0
 try:
     {function}({test})
     locals()['autograder']['{function}'].append( (None, newOutput.getvalue()[:-1] == {tests[test]}, {tests[test]}, newOutput.getvalue()[:-1]) )
@@ -296,44 +316,48 @@ try:
 except Exception as err:
     locals()['autograder']['{function}'].append( (None, False, {tests[test]}, type(err).__name__ + ': ' + str(err)) )
             '''
+        file += f'\nend = time.time()\nlocals()[\'autograder\'][\'{function}_time\'] = end-start'
         return file
     
     def attachOOPTestCases(self, tests, function):
         file = self.file
+        file += '\nimport time\nstart = time.time()\n'
         for test in tests:
             testsToInject = tests[test].split('\n')
             testToInject = '\n    '.join(testsToInject)
             file += f'''
 if locals()['autograder'].get('{function}', None) == None:
     locals()['autograder']['{function}'] = []
+    locals()['autograder']['{function}_time'] = 0
 try:
     {testToInject}
     locals()['autograder']['{function}'].append( (None, True, '{test}', '{test} failed.') )
 except Exception as err:
     locals()['autograder']['{function}'].append( (None, False, '{test}', type(err).__name__ + ': ' + str(err)) )
 '''
+        file += f'\nend = time.time()\nlocals()[\'autograder\'][\'{function}_time\'] = end-start'
         return file
 
 
     def attachNDestructive(self, tests, function, destructive):
-        importCopy = '''import copy\n'''
+        importCopy = '''\nimport copy\nimport time\n'''
         file = importCopy + self.file
+        file += '\nstart = time.time()\n'
 
         for test in tests:
             endList = test.find(']')
             file += f'''
 if locals()['autograder'].get('{function}', None) == None:
     locals()['autograder']['{function}'] = []
+    locals()['autograder']['{function}_time'] = 0
 try:
     totalArgs = [{test}]
     
     L = copy.copy(totalArgs[0])
-
     notCopy = L
     unchangedCopy = copy.deepcopy(L)
-    print(str(L) + "{test[endList+1:]}")
     functionReturn = {function}(L,{test[endList+2:]})
-    print(functionReturn)
+    
     if {destructive}:
         # Check if destructive
         if functionReturn != None:
@@ -353,7 +377,9 @@ try:
 except Exception as err:
     locals()['autograder']['{function}'].append( (None, False, {tests[test]}, type(err).__name__ + ': ' + str(err)) )
 '''
+        file += f'\nend = time.time()\nlocals()[\'autograder\'][\'{function}_time\'] = end-start'
         return file
+
 async def main():
     # myAuto = Autograder('https://s.matc.io/recursive.py', [])
     myAuto = Autograder('https://www.dropbox.com/s/2kzrmed3bkceptt/sample.py?dl=1', [])
@@ -371,7 +397,7 @@ async def main():
     print(x)
 
 if __name__ == "__main__":
-    # testCases = json.load(open('testCases.json', 'r'))
+    # testCases = json.load(open('testCases.json', 'r').close())
     # testCases["decodeList"]
 
     # myAuto = Autograder('https://s.matc.io/hw3.py')
