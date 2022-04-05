@@ -15,10 +15,15 @@ import discord
 import aiohttp
 import asyncio
 
+import os
+from dotenv import load_dotenv
 from discord.ext import commands
+
+load_dotenv()
+
 if __name__ == '__main__': from cogs.competitions import Competitions
 
-botOwners = [472521286807977994]
+botOwners = [os.getenv("DISCORD_OWNER")]
 
 # Sets up discord client.
 client = commands.Bot(command_prefix=commands.when_mentioned_or('!'))
@@ -477,4 +482,4 @@ async def on_ready():
 if __name__ == '__main__':
     client.loop.create_task(check_competition(client))
     client.add_cog(Competitions(client))
-    client.run('OTA0MzE2NzAyMDE0MTk3Nzcw.YX5wjw.Th1vijyh0S7IxCkDGed0JtjRfmk')
+    client.run(os.getenv("DISCORD_TOKEN"))
